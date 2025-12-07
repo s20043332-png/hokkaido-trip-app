@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>北海道行程 Web App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind 自訂主題 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            hokkaidoDark: "#041826",   // 背景深藍
+            hokkaidoBlue: "#1D4ED8",   // 主藍
+            hokkaidoLight: "#E0F2FE",  // 淺藍
+          },
+          boxShadow: {
+            soft: "0 10px 25px rgba(15,23,42,0.25)",
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <style>
+    /* Hero 橢圓弧形銜接效果 */
+    .hero-mask-bottom {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-mask-bottom::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -60px;
+      transform: translateX(-50%);
+      width: 140%;
+      height: 120px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      z-index: 5;
+    }
+
+    /* 讓主內容往上疊到 hero 圓弧 */
+    .main-card {
+      position: relative;
+      z-index: 10;
+      margin-top: -70px;
+    }
+
+    /* 讓 Google Maps iframe 比較像 App 區塊 */
+    .map-frame {
+      border: none;
+      width: 100%;
+      height: 260px;
+      border-radius: 1rem;
+    }
+  </style>
+</head>
+<body class="bg-hokkaidoDark text-slate-100">
+<div id="app" class="min-h-screen flex justify-center">
+  <div class="w-full max-w-md pb-24">
+
+    <!-- Hero / Banner -->
+    <header class="hero-mask-bottom">
+      <div
+        class="h-[250px] w-full bg-cover bg-center"
+        style="background-image: url('https://images.pexels.com/photos/360912/pexels-photo-360912.jpeg');"
+      >
+        <div class="w-full h-full bg-gradient-to-b from-hokkaidoDark/20 to-hokkaidoDark/75 flex flex-col justify-between p-4">
+          <div class="flex justify-between items-center text-xs">
+            <span class="px-2 py-1 rounded-full bg-black/40 backdrop-blur">
+              北海道 9 天輕鬆行
+            </span>
+            <span class="px-2 py-1 rounded-full bg-black/40 backdrop-blur">
+              2026 / 1 / 26 – 2 / 3
+            </span>
+          </div>
+
+          <div class="space-y-1">
+            <h1 class="text-2xl font-semibold tracking-wide">
+              Hokkaido Winter Trip
+            </h1>
+            <p class="text-sm text-slate-100/80">
+              札幌・小樽・支笏湖・千歲  
+              <span class="text-xs">體力保留組專用行程</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主卡片 -->
+    <main class="main-card px-4">
+      <section class="bg-white text-slate-900 rounded-3xl shadow-soft p-4 space-y-4">
+
+        <!-- Trip Tag & Summary -->
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <p class="text-xs text-slate-400 uppercase tracking-wide">
+              行程概覽
+            </p>
+            <p class="text-sm font-medium">
+              札幌 5 晚・千歲 2 晚・9 天 8 夜
+            </p>
+          </div>
+          <div class="flex gap-2 text-xs">
+            <span class="px-2 py-1 rounded-full bg-hokkaidoLight text-hokkaidoBlue font-medium">
+              大眾運輸
+            </span>
+            <span class="px-2 py-1 rounded-full bg-slate-100">
+              少走路
+            </span>
+          </div>
+        </div>
+
+        <!-- 航班 / 住宿 / 交通 tabs -->
+        <div class="flex gap-2 text-xs mt-2">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            class="flex-1 py-2 rounded-2xl border text-center transition
+                   hover:border-hokkaidoBlue hover:text-hokkaidoBlue"
+            :class="activeTab === tab.id
+              ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
+              : 'bg-slate-50 border-slate-200 text-slate-700'"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="mt-3 space-y-3 text-sm">
+          <!-- Flights -->
+          <div v-if="activeTab === 'flight'" class="space-y-3">
+            <div class="bg-slate-50 rounded-2xl p-3">
+              <p class="text-xs font-semibold text-slate-500 mb-1">
+                去程｜1 / 26（一）
+              </p>
+              <p class="font-medium">
+                台灣 ✈ 新千歲（08:35 → 13:15）
+              </p>
+              <p class="text-xs text-slate-500 mt-1">
+                抵達後搭 JR 快速 Airport 約 40 分鐘到札幌。
+              </p>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-3">
+              <p class="text-xs font-semibold text-slate-500 mb-1">
+                回程｜2 / 3（二）
+              </p>
+              <p class="font-medium">
+                新千歲 ✈ 台灣（14:40 → 18:15）
+              </p>
+              <p class="text-xs text-slate-500 mt-1">
+                建議於起飛前 3 小時抵達機場，最後採買伴手禮。
+              </p>
+            </div>
+          </div>
+
+          <!-- Hotels -->
+          <div v-if="activeTab === 'stay'" class="space-y-3">
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+              <p class="text-xs font-semibold text-slate-500">
+                札幌 5 晚（1 / 26 – 1 / 31）
+              </p>
+              <p class="font-medium">京王プレリアホテル札幌（Keio Prelia Hotel）</p>
+              <p class="text-xs text-slate-500">
+                4 Chome-11-1 Kita 8 Jonishi, Kita Ward, Sapporo
+              </p>
+              <button
+                @click="openMaps('京王プレリアホテル札幌')"
+                class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-hokkaidoLight text-hokkaidoBlue"
+              >
+                在 Google Maps 開啟
+              </button>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+              <p class="text-xs font-semibold text-slate-500">
+                千歲 2 晚（2 / 1 – 2 / 3）
+              </p>
+              <p class="font-medium">Chiyoda-cho 3-13 一帶住宿（千歲市）</p>
+              <p class="text-xs text-slate-500">
+                方便前往新千歲機場與支笏湖冰濤祭。
+              </p>
+              <button
+                @click="openMaps('Chiyoda-cho 3-13 千歳市')"
+                class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-hokkaidoLight text-hokkaidoBlue"
+              >
+                在 Google Maps 開啟
+              </button>
+            </div>
+          </div>
+
+          <!-- Transport -->
+          <div v-if="activeTab === 'transport'" class="space-y-3">
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+              <p class="text-xs font-semibold text-slate-500">
+                主要交通
+              </p>
+              <ul class="list-disc list-inside text-xs text-slate-600 space-y-1">
+                <li>札幌市區：地鐵 / 市電 + 少量計程車，無須 JR Pass。</li>
+                <li>札幌 ⇄ 小樽：JR 往返即可（單程約 ¥750）。</li>
+                <li>千歲 ⇄ 支笏湖：支笏洞爺國立公園巴士，單程約 55 分。</li>
+              </ul>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+              <p class="text-xs font-semibold text-slate-500">
+                體力保留 Tips
+              </p>
+              <ul class="list-disc list-inside text-xs text-slate-600 space-y-1">
+                <li>長距離或上坡路段可改搭計程車。</li>
+                <li>優先排地下街、室內景點，避免長時間暴露在風雪中。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 日程切換 -->
+        <section class="mt-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-800">
+              每日行程
+            </h2>
+            <p class="text-[11px] text-slate-400">
+              點選日期查看景點與地圖
+            </p>
+          </div>
+
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            <button
+              v-for="day in days"
+              :key="day.id"
+              @click="selectDay(day.id)"
+              class="flex-shrink-0 px-3 py-2 rounded-2xl border text-xs text-left transition"
+              :class="currentDayId === day.id
+                ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
+                : 'bg-slate-50 border-slate-200 text-slate-700'"
+            >
+              <div class="font-semibold">
+                Day {{ day.display }}
+              </div>
+              <div class="text-[11px]">
+                {{ day.shortTitle }}
+              </div>
+            </button>
+          </div>
+
+          <!-- 當日資訊 -->
+          <div class="bg-slate-50 rounded-2xl p-3 space-y-2 text-xs">
+            <p class="font-semibold text-slate-700">
+              {{ currentDay.title }}
+            </p>
+            <p class="text-slate-500">
+              {{ currentDay.summary }}
+            </p>
+            <p class="text-[11px] text-slate-400" v-if="currentDay.area">
+              主要區域：{{ currentDay.area }}
+            </p>
+          </div>
+
+          <!-- 景點列表 -->
+          <div class="space-y-2 text-xs">
+            <div
+              v-for="spot in currentDay.spots"
+              :key="spot.name"
+              class="flex items-start gap-3 bg-slate-50 rounded-2xl p-3"
+              :class="spot.name === currentSpot.name ? 'ring-2 ring-hokkaidoBlue/60' : ''"
+            >
+              <button
+                class="mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                :class="spot.category === '景點'
+                  ? 'bg-hokkaidoLight text-hokkaidoBlue'
+                  : spot.category === '美食'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-emerald-100 text-emerald-700'"
+                @click="setCurrentSpot(spot)"
+              >
+                {{ spot.icon }}
+              </button>
+              <div class="flex-1">
+                <div class="flex justify-between gap-2">
+                  <p class="font-semibold text-slate-800">
+                    {{ spot.name }}
+                  </p>
+                  <span class="text-[11px] text-slate-400">
+                    {{ spot.category }}
+                  </span>
+                </div>
+                <p class="text-slate-500 mt-0.5">
+                  {{ spot.note }}
+                </p>
+                <div class="flex gap-2 mt-2">
+                  <button
+                    @click="setCurrentSpot(spot)"
+                    class="px-2 py-1 rounded-full bg-white border border-slate-200 text-[11px]"
+                  >
+                    查看地圖
+                  </button>
+                  <button
+                    @click="openMaps(spot.mapsQuery)"
+                    class="px-2 py-1 rounded-full bg-hokkaidoBlue text-white text-[11px]"
+                  >
+                    在 Google Maps 開啟導航
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Google Maps 區 -->
+          <div class="bg-slate-900 rounded-2xl p-3 text-xs text-slate-100 space-y-2">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-[11px] text-slate-400">
+                  目前選擇景點
+                </p>
+                <p class="text-sm font-semibold">
+                  {{ currentSpot.name }}
+                </p>
+              </div>
+              <span class="text-[11px] px-2 py-1 rounded-full bg-slate-800">
+                {{ currentSpot.category }}
+              </span>
+            </div>
+            <iframe
+              class="map-frame mt-1"
+              :src="mapEmbedUrl"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        </section>
+      </section>
+
+      <!-- 底部固定導航條（裝飾用） -->
+      <nav
+        class="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-6 py-2 rounded-t-3xl bg-black/60 backdrop-blur flex justify-between text-[11px] text-slate-200"
+      >
+        <button class="flex flex-col items-center gap-0.5">
+          <span>行程</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 opacity-70">
+          <span>地圖</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 opacity-70">
+          <span>備忘錄</span>
+        </button>
+      </nav>
+    </main>
+  </div>
+</div>
+
+<script>
+  const { createApp, computed } = Vue;
+
+  createApp({
+    data() {
+      return {
+        tabs: [
+          { id: "flight", label: "航班" },
+          { id: "stay",   label: "住宿" },
+          { id: "transport", label: "交通" },
+        ],
+        activeTab: "flight",
+        currentDayId: "d1",
+        currentSpot: {
+          name: "新千歲機場",
+          category: "交通",
+          mapsQuery: "新千歳空港",
+          note: "北海道的入口，也是最後採買伴手禮的好地方。",
+          icon: "✈️",
+        },
+        days: [
+          {
+            id: "d1",
+            display: 1,
+            shortTitle: "抵達札幌・寶可夢中心",
+            title: "Day 1｜1 / 26（一）抵達 & 札幌車站周邊",
+            summary: "新千歲機場抵達 → JR 札幌 → 飯店 Check-in → 寶可夢中心 & 札幌車站逛街。",
+            area: "新千歲・札幌車站",
+            spots: [
+              {
+                name: "新千歲機場",
+                category: "交通",
+                mapsQuery: "新千歳空港",
+                note: "抵達後搭 JR 快速 Airport 約 40 分鐘到札幌。",
+                icon: "✈️",
+              },
+              {
+                name: "京王プレリアホテル札幌",
+                category: "住宿",
+                mapsQuery: "京王プレリアホテル札幌",
+                note: "札幌站北口步行約 3–5 分鐘，回飯店泡大浴場。",
+                icon: "🏨",
+              },
+              {
+                name: "寶可夢中心 札幌（大丸 8F）",
+                category: "景點",
+                mapsQuery: "ポケモンセンターサッポロ",
+                note: "抵達第一天只跑車站大樓，輕鬆採購。",
+                icon: "🧸",
+              },
+            ],
+          },
+          {
+            id: "d2",
+            display: 2,
+            shortTitle: "北大・北海道神宮",
+            title: "Day 2｜1 / 27（二）北海道大學 & 北海道神宮",
+            summary: "上午北海道大學雪景，下午北海道神宮 & 六花亭判官餅，晚餐成吉思汗烤肉。",
+            area: "札幌北區・圓山",
+            spots: [
+              {
+                name: "北海道大學（札幌校區）",
+                category: "景點",
+                mapsQuery: "北海道大学 札幌キャンパス",
+                note: "只走校門與克拉克像一帶，體力保留。",
+                icon: "🎓",
+              },
+              {
+                name: "北海道神宮",
+                category: "景點",
+                mapsQuery: "北海道神宮",
+                note: "冬季雪景非常漂亮，可順訪六花亭神宮茶屋。",
+                icon: "⛩️",
+              },
+              {
+                name: "六花亭 神宮茶屋",
+                category: "美食",
+                mapsQuery: "六花亭 神宮茶屋",
+                note: "品嚐熱騰騰判官餅，暖身休息。",
+                icon: "🍡",
+              },
+            ],
+          },
+          {
+            id: "d3",
+            display: 3,
+            shortTitle: "二條市場・諏訪神社・藻岩山",
+            title: "Day 3｜1 / 28（三）海鮮丼 & 藻岩山夜景",
+            summary: "早上海鮮丼 + 諏訪神社，下午回飯店午睡，晚上藻岩山夜景。",
+            area: "札幌中心・南區",
+            spots: [
+              {
+                name: "二條市場",
+                category: "美食",
+                mapsQuery: "二条市場 札幌",
+                note: "海鮮丼、螃蟹、海產早午餐一次滿足。",
+                icon: "🦀",
+              },
+              {
+                name: "札幌諏訪神社",
+                category: "景點",
+                mapsQuery: "札幌 諏訪神社",
+                note: "花手水拍照可愛小景點，不用停太久。",
+                icon: "🙏",
+              },
+              {
+                name: "藻岩山纜車・展望台",
+                category: "景點",
+                mapsQuery: "札幌もいわ山ロープウェイ",
+                note: "札幌百萬夜景，看完直接下山覓食。",
+                icon: "🌃",
+              },
+            ],
+          },
+          {
+            id: "d4",
+            display: 4,
+            shortTitle: "大通公園・狸小路",
+            title: "Day 4｜1 / 29（四）地下街逛街日",
+            summary: "走地下步行空間到大通公園、電視塔，再到狸小路商店街與咖啡廳。",
+            area: "札幌市中心",
+            spots: [
+              {
+                name: "大通公園 & 電視塔周邊",
+                category: "景點",
+                mapsQuery: "大通公園 札幌",
+                note: "冬季雪景，能看到雪祭準備現場。",
+                icon: "🗼",
+              },
+              {
+                name: "狸小路商店街",
+                category: "景點",
+                mapsQuery: "狸小路商店街",
+                note: "有屋頂的商店街，逛街避寒好選擇。",
+                icon: "🛍️",
+              },
+              {
+                name: "狸小路周邊咖啡廳",
+                category: "美食",
+                mapsQuery: "狸小路 カフェ",
+                note: "下午找間咖啡廳坐著聊天、休息。",
+                icon: "☕",
+              },
+            ],
+          },
+          {
+            id: "d5",
+            display: 5,
+            shortTitle: "小樽一日遊",
+            title: "Day 5｜1 / 30（五）小樽運河 & 音樂盒堂",
+            summary: "JR 前往小樽，散步堺町通、小樽音樂盒堂與運河夜景。",
+            area: "小樽",
+            spots: [
+              {
+                name: "南小樽站",
+                category: "交通",
+                mapsQuery: "南小樽駅",
+                note: "下車後以緩下坡走向堺町通，體力較省。",
+                icon: "🚉",
+              },
+              {
+                name: "小樽音樂盒堂 2 號館 古董音樂盒博物館",
+                category: "景點",
+                mapsQuery: "小樽オルゴール堂 第二號館 アンティークミュージアム",
+                note: "你的必去景點之一，先排進行程前段。",
+                icon: "🎵",
+              },
+              {
+                name: "小樽運河",
+                category: "景點",
+                mapsQuery: "小樽運河",
+                note: "傍晚點燈最浪漫，可以拍很多照片。",
+                icon: "🌊",
+              },
+              {
+                name: "政壽司／壽司店",
+                category: "美食",
+                mapsQuery: "政寿司 小樽",
+                note: "晚餐品嚐壽司、生魚片、螃蟹料理。",
+                icon: "🍣",
+              },
+            ],
+          },
+          {
+            id: "d6",
+            display: 6,
+            shortTitle: "札幌彈性自由日",
+            title: "Day 6｜1 / 31（六）自由安排・體力回復日",
+            summary: "視體力選擇札幌車站周邊逛街、JR Tower 展望台，或在飯店大浴場放鬆。",
+            area: "札幌車站周邊",
+            spots: [
+              {
+                name: "JR Tower 展望台 T38",
+                category: "景點",
+                mapsQuery: "JRタワー 展望室 T38",
+                note: "室內看札幌市景的好選擇。",
+                icon: "🏙️",
+              },
+              {
+                name: "札幌站購物區",
+                category: "景點",
+                mapsQuery: "札幌駅 商業施設",
+                note: "大丸、Stellar Place 等商場慢慢逛。",
+                icon: "🛒",
+              },
+            ],
+          },
+          {
+            id: "d7",
+            display: 7,
+            shortTitle: "支笏湖冰濤祭",
+            title: "Day 7｜2 / 1（日）移動到千歲 & 支笏湖冰濤祭",
+            summary: "上午退房移動到千歲，下午～晚上參觀支笏湖冰濤祭。",
+            area: "千歲・支笏湖",
+            spots: [
+              {
+                name: "千歲站／千歲市區",
+                category: "交通",
+                mapsQuery: "千歳駅 北海道",
+                note: "先入住 Chiyoda-cho 3-13 一帶住宿。",
+                icon: "🚉",
+              },
+              {
+                name: "支笏湖溫泉街",
+                category: "景點",
+                mapsQuery: "支笏湖温泉",
+                note: "湖邊散步、感受冰雪環境。",
+                icon: "🏞️",
+              },
+              {
+                name: "支笏湖冰濤祭會場",
+                category: "景點",
+                mapsQuery: "支笏湖 氷濤まつり",
+                note: "冰雕與夜間點燈，超級冷，一定要多穿。",
+                icon: "❄️",
+              },
+            ],
+          },
+          {
+            id: "d8",
+            display: 8,
+            shortTitle: "新千歲機場一日遊",
+            title: "Day 8｜2 / 2（一）新千歲機場樂園日",
+            summary: "一整天待在新千歲機場：Hello Kitty、Royce 巧克力世界、機場溫泉、拉麵道場。",
+            area: "新千歲機場",
+            spots: [
+              {
+                name: "Hello Kitty Happy Flight",
+                category: "景點",
+                mapsQuery: "HELLO KITTY HAPPY FLIGHT 新千歳",
+                note: "主題展與拍照區，適合輕鬆慢逛。",
+                icon: "🎀",
+              },
+              {
+                name: "Royce' Chocolate World",
+                category: "景點",
+                mapsQuery: "Royce' Chocolate World 新千歳空港",
+                note: "巧克力工廠 + 博物館 + 伴手禮。",
+                icon: "🍫",
+              },
+              {
+                name: "新千歲機場溫泉",
+                category: "景點",
+                mapsQuery: "新千歳空港温泉",
+                note: "泡湯放鬆腿，完全室內不怕冷。",
+                icon: "♨️",
+              },
+              {
+                name: "拉麵道場",
+                category: "美食",
+                mapsQuery: "新千歳空港 ラーメン道場",
+                note: "一次吃到多家北海道拉麵名店。",
+                icon: "🍜",
+              },
+            ],
+          },
+          {
+            id: "d9",
+            display: 9,
+            shortTitle: "回程・最後採買",
+            title: "Day 9｜2 / 3（二）回程日",
+            summary: "Check-out 後前往新千歲機場，最後採買伴手禮，搭機回台灣。",
+            area: "千歲・新千歲機場",
+            spots: [
+              {
+                name: "新千歲機場 伴手禮區",
+                category: "美食",
+                mapsQuery: "新千歳空港 お土産",
+                note: "白色戀人、Royce、薯條三兄弟等一次買齊。",
+                icon: "🛍️",
+              },
+              {
+                name: "新千歲機場國際線出境",
+                category: "交通",
+                mapsQuery: "新千歳空港 国際線 出発",
+                note: "起飛前 2.5〜3 小時到機場最安心。",
+                icon: "✈️",
+              },
+            ],
+          },
+        ],
+      };
+    },
+    computed: {
+      currentDay() {
+        return this.days.find(d => d.id === this.currentDayId) || this.days[0];
+      },
+      mapEmbedUrl() {
+        const q = encodeURIComponent(this.currentSpot.mapsQuery || this.currentSpot.name);
+        return `https://www.google.com/maps?q=${q}&output=embed`;
+      },
+    },
+    methods: {
+      selectDay(id) {
+        this.currentDayId = id;
+        // 切換日程時，預設選第一個景點
+        const day = this.days.find(d => d.id === id);
+        if (day && day.spots.length > 0) {
+          this.currentSpot = day.spots[0];
+        }
+      },
+      setCurrentSpot(spot) {
+        this.currentSpot = spot;
+      },
+      openMaps(query) {
+        const q = encodeURIComponent(query);
+        const url = `https://www.google.com/maps/search/?api=1&query=${q}`;
+        window.open(url, "_blank");
+      },
+    },
+    mounted() {
+      // 初始化預設為 Day1 第一個景點
+      const day = this.days.find(d => d.id === this.currentDayId);
+      if (day && day.spots[0]) {
+        this.currentSpot = day.spots[0];
+      }
+    },
+  }).mount("#app");
+</script>
+</body>
+</html>
