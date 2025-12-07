@@ -35,6 +35,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .hero-mask-bottom::after {
       content: "";
       position: absolute;
@@ -47,23 +48,35 @@
       border-radius: 50%;
       z-index: 5;
     }
+
+    /* 讓主內容往上疊到 hero 圓弧 */
     .main-card {
       position: relative;
       z-index: 10;
       margin-top: -70px;
     }
+
     .map-frame {
       border: none;
       width: 100%;
       height: 260px;
       border-radius: 1rem;
     }
+
+    /* 手機輸入框去掉數字箭頭（好看一點） */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
   </style>
 </head>
-
 <body class="bg-hokkaidoDark text-slate-100">
 <div id="app" class="min-h-screen flex justify-center">
-  <div class="w-full max-w-md pb-28">
+  <div class="w-full max-w-md pb-24">
 
     <!-- Hero / Banner -->
     <header class="hero-mask-bottom">
@@ -83,450 +96,660 @@
 
           <div class="space-y-1">
             <h1 class="text-2xl font-semibold tracking-wide">
-              Hokkaido Winter Trip 3.0
+              Hokkaido Winter Trip
             </h1>
             <p class="text-sm text-slate-100/80">
-              Cassandra &amp; Ivy ・ 札幌・小樽・支笏湖・千歲
+              札幌・小樽・支笏湖・千歲
+              <span class="text-xs">體力保留組專用行程</span>
             </p>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- 主卡片 -->
+    <!-- 主內容 -->
     <main class="main-card px-4">
       <section class="bg-white text-slate-900 rounded-3xl shadow-soft p-4 space-y-4">
 
-        <!-- Trip Tag & Summary -->
+        <!-- 行程 / 預算 / 行李 三大類 -->
         <div class="flex items-center justify-between gap-2">
           <div>
             <p class="text-xs text-slate-400 uppercase tracking-wide">
-              行程概覽
+              北海道 2026
             </p>
-            <p class="text-sm font-medium">
-              札幌 5 晚・千歲 2 晚・9 天 8 夜
+            <p class="text-sm font-medium" v-if="activeMainView === 'plan'">
+              行程總覽與每日地圖
+            </p>
+            <p class="text-sm font-medium" v-else-if="activeMainView === 'budget'">
+              預算・匯率・每日花費
+            </p>
+            <p class="text-sm font-medium" v-else>
+              行李打包清單
             </p>
           </div>
           <div class="flex gap-2 text-[11px]">
             <span class="px-2 py-1 rounded-full bg-hokkaidoLight text-hokkaidoBlue font-medium">
-              大眾運輸
+              Cassandra & Ivy
             </span>
             <span class="px-2 py-1 rounded-full bg-slate-100">
-              體力保留組
+              自用旅行小 App
             </span>
           </div>
         </div>
 
-        <!-- 航班 / 住宿 / 交通 tabs -->
-        <div class="flex gap-2 text-xs mt-2">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            @click="activeTab = tab.id"
-            class="flex-1 py-2 rounded-2xl border text-center transition
-                   hover:border-hokkaidoBlue hover:text-hokkaidoBlue"
-            :class="activeTab === tab.id
-              ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
-              : 'bg-slate-50 border-slate-200 text-slate-700'"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+        <!-- 內頁切換內容 -->
+        <!-- ① 行程頁 -->
+        <template v-if="activeMainView === 'plan'">
 
-        <!-- Tab Content -->
-        <div class="mt-3 space-y-3 text-sm">
-          <!-- Flights -->
-          <div v-if="activeTab === 'flight'" class="space-y-3">
-            <div class="bg-slate-50 rounded-2xl p-3">
-              <p class="text-xs font-semibold text-slate-500 mb-1">
-                去程｜1 / 26（一）
-              </p>
-              <p class="font-medium">
-                台灣 ✈ 新千歲（08:35 → 13:15）
-              </p>
-              <p class="text-xs text-slate-500 mt-1">
-                抵達後搭 JR 快速 Airport 約 40 分鐘到札幌。
-              </p>
-            </div>
-            <div class="bg-slate-50 rounded-2xl p-3">
-              <p class="text-xs font-semibold text-slate-500 mb-1">
-                回程｜2 / 3（二）
-              </p>
-              <p class="font-medium">
-                新千歲 ✈ 台灣（14:40 → 18:15）
-              </p>
-              <p class="text-xs text-slate-500 mt-1">
-                建議起飛前 3 小時抵達機場，最後採買伴手禮。
-              </p>
-            </div>
-          </div>
-
-          <!-- Hotels -->
-          <div v-if="activeTab === 'stay'" class="space-y-3">
-            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
-              <p class="text-xs font-semibold text-slate-500">
-                札幌 5 晚（1 / 26 – 1 / 31）
-              </p>
-              <p class="font-medium">京王プレリアホテル札幌（Keio Prelia Hotel）</p>
-              <p class="text-xs text-slate-500">
-                4 Chome-11-1 Kita 8 Jonishi, Kita Ward, Sapporo
-              </p>
-              <button
-                @click="openMaps('京王プレリアホテル札幌')"
-                class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-hokkaidoLight text-hokkaidoBlue"
-              >
-                在 Google Maps 開啟
-              </button>
-            </div>
-
-            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
-              <p class="text-xs font-semibold text-slate-500">
-                千歲 2 晚（2 / 1 – 2 / 3）
-              </p>
-              <p class="font-medium">Chiyoda-cho 3-13 一帶住宿（千歲市）</p>
-              <p class="text-xs text-slate-500">
-                方便前往新千歲機場與支笏湖冰濤祭。
-              </p>
-              <button
-                @click="openMaps('Chiyoda-cho 3-13 千歳市')"
-                class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-hokkaidoLight text-hokkaidoBlue"
-              >
-                在 Google Maps 開啟
-              </button>
-            </div>
-          </div>
-
-          <!-- Transport -->
-          <div v-if="activeTab === 'transport'" class="space-y-3">
-            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
-              <p class="text-xs font-semibold text-slate-500">
-                主要交通
-              </p>
-              <ul class="list-disc list-inside text-xs text-slate-600 space-y-1">
-                <li>札幌市區：地鐵 / 市電 + 少量計程車，無須 JR Pass。</li>
-                <li>札幌 ⇄ 小樽：JR 快速列車往返（單程約 ¥750）。</li>
-                <li>千歲 ⇄ 支笏湖：巴士往返，單程約 55 分鐘。</li>
-              </ul>
-            </div>
-            <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
-              <p class="text-xs font-semibold text-slate-500">
-                體力保留 Tips
-              </p>
-              <ul class="list-disc list-inside text-xs text-slate-600 space-y-1">
-                <li>長距離或上坡路段可改搭計程車。</li>
-                <li>優先排地下街、室內景點，避免長時間暴露在風雪中。</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- 預算 & 匯率 -->
-        <section class="mt-2 space-y-3 text-xs">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-800">
-              預算 &amp; 匯率（Cassandra）
-            </h2>
-            <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-500">
-              上限：{{ budgetTwd.toLocaleString() }} TWD
-            </span>
-          </div>
-
-          <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
-            <div class="flex gap-2 items-center">
-              <label class="w-24 text-[11px] text-slate-500">匯率 1 TWD =</label>
-              <input
-                type="number"
-                step="0.01"
-                v-model.number="jpyPerTwd"
-                class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-right text-xs"
-              />
-              <span class="text-[11px] text-slate-500">JPY</span>
-            </div>
-            <p class="text-[11px] text-slate-500">
-              目前預估：<span class="font-semibold text-hokkaidoBlue">{{ budgetJpy.toLocaleString() }}</span> 日圓可用。
-            </p>
-
-            <div class="flex gap-2 items-center mt-2">
-              <label class="w-24 text-[11px] text-slate-500">本趟已花</label>
-              <input
-                type="number"
-                min="0"
-                v-model.number="extraManualSpend"
-                class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-right text-xs"
-                placeholder="除每日交通/餐費之外的其他花費 (JPY)"
-              />
-            </div>
-
-            <div class="mt-2 space-y-1">
-              <div class="flex justify-between text-[11px]">
-                <span>目前估計總花費</span>
-                <span class="font-semibold text-slate-700">
-                  ¥{{ totalSpendJpy.toLocaleString() }}
-                  （約 {{ totalSpendTwd.toLocaleString() }} TWD）
-                </span>
-              </div>
-              <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-                <div
-                  class="h-full rounded-full transition-all"
-                  :class="budgetBarColor"
-                  :style="{ width: budgetUsedPercent + '%' }"
-                ></div>
-              </div>
-              <div class="flex justify-between text-[11px] text-slate-500">
-                <span>使用 {{ budgetUsedPercent.toFixed(0) }}%</span>
-                <span>剩餘約 ¥{{ remainingJpy.toLocaleString() }}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 日程切換 -->
-        <section class="mt-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-slate-800">
-              每日行程
-            </h2>
-            <p class="text-[11px] text-slate-400">
-              點選日期查看景點、地圖與 Check List
-            </p>
-          </div>
-
-          <div class="flex gap-2 overflow-x-auto pb-1">
+          <!-- 航班 / 住宿 / 交通 tabs -->
+          <div class="flex gap-2 text-xs mt-2">
             <button
-              v-for="day in days"
-              :key="day.id"
-              @click="selectDay(day.id)"
-              class="flex-shrink-0 px-3 py-2 rounded-2xl border text-xs text-left transition"
-              :class="currentDayId === day.id
+              v-for="tab in tabs"
+              :key="tab.id"
+              @click="activeTab = tab.id"
+              class="flex-1 py-2 rounded-2xl border text-center transition
+                     hover:border-hokkaidoBlue hover:text-hokkaidoBlue"
+              :class="activeTab === tab.id
                 ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
                 : 'bg-slate-50 border-slate-200 text-slate-700'"
             >
-              <div class="font-semibold">
-                Day {{ day.display }}
-              </div>
-              <div class="text-[11px]">
-                {{ day.shortTitle }}
-              </div>
+              {{ tab.label }}
             </button>
           </div>
 
-          <!-- 當日摘要 + 交通預估 -->
-          <div class="bg-slate-50 rounded-2xl p-3 space-y-2 text-xs">
-            <div class="flex justify-between gap-2">
-              <div>
-                <p class="font-semibold text-slate-700">
-                  {{ currentDay.title }}
+          <!-- Tab Content -->
+          <div class="mt-3 space-y-3 text-sm">
+            <!-- Flights -->
+            <div v-if="activeTab === 'flight'" class="space-y-3">
+              <div class="bg-slate-50 rounded-2xl p-3">
+                <p class="text-xs font-semibold text-slate-500 mb-1">
+                  去程｜1 / 26（一）
                 </p>
-                <p class="text-slate-500">
-                  {{ currentDay.summary }}
+                <p class="font-medium">
+                  台灣 ✈ 新千歲（08:35 → 13:15）
                 </p>
-                <p class="text-[11px] text-slate-400" v-if="currentDay.area">
-                  主要區域：{{ currentDay.area }}
+                <p class="text-xs text-slate-500 mt-1">
+                  抵達後搭 JR 快速 Airport 約 40 分鐘到札幌。
                 </p>
               </div>
-              <div class="text-right text-[11px]">
-                <p class="text-slate-400">本日交通預估</p>
-                <p class="font-semibold text-hokkaidoBlue">
-                  ¥{{ currentDay.transportEstimate.toLocaleString() }}
+              <div class="bg-slate-50 rounded-2xl p-3">
+                <p class="text-xs font-semibold text-slate-500 mb-1">
+                  回程｜2 / 3（二）
+                </p>
+                <p class="font-medium">
+                  新千歲 ✈ 台灣（14:40 → 18:15）
+                </p>
+                <p class="text-xs text-slate-500 mt-1">
+                  建議於起飛前 3 小時抵達機場，最後採買伴手禮。
+                </p>
+              </div>
+            </div>
+
+            <!-- Hotels -->
+            <div v-if="activeTab === 'stay'" class="space-y-3">
+              <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+                <p class="text-xs font-semibold text-slate-500">
+                  札幌 5 晚（1 / 26 – 1 / 31）
+                </p>
+                <p class="font-medium">京王プレリアホテル札幌（Keio Prelia Hotel）</p>
+                <p class="text-xs text-slate-500">
+                  4 Chome-11-1 Kita 8 Jonishi, Kita Ward, Sapporo
+                </p>
+                <button
+                  @click="openMaps('京王プレリアホテル札幌')"
+                  class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-hokkaidoLight text-hokkaidoBlue"
+                >
+                  在 Google Maps 開啟
+                </button>
+              </div>
+
+              <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+                <p class="text-xs font-semibold text-slate-500">
+                  千歲 2 晚（2 / 1 – 2 / 3）
+                </p>
+                <p class="font-medium">Chiyoda-cho 3-13 一帶住宿（千歲市）</p>
+                <p class="text-xs text-slate-500">
+                  方便前往新千歲機場與支笏湖冰濤祭。
+                </p>
+                <button
+                  @click="openMaps('Chiyoda-cho 3-13 千歳市')"
+                  class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-hokkaidoLight text-hokkaidoBlue"
+                >
+                  在 Google Maps 開啟
+                </button>
+              </div>
+            </div>
+
+            <!-- Transport -->
+            <div v-if="activeTab === 'transport'" class="space-y-3">
+              <div class="bg-slate-50 rounded-2xl p-3 space-y-1">
+                <p class="text-xs font-semibold text-slate-500">
+                  主要交通概念（不含機票）
+                </p>
+                <ul class="list-disc list-inside text-xs text-slate-600 space-y-1">
+                  <li>札幌市區：地鐵 / 市電 + 少量計程車，無須 JR Pass。</li>
+                  <li>札幌 ⇄ 小樽：JR 往返即可（單程約 ¥750）。</li>
+                  <li>札幌 ⇄ 千歲：JR 快速 Airport。</li>
+                  <li>千歲 ⇄ 支笏湖冰濤祭：本行程以「計程車往返」預估，車資預算較鬆。</li>
+                </ul>
+              </div>
+              <div class="bg-slate-50 rounded-2xl p-3 space-y-1 text-xs text-slate-600">
+                <p class="text-xs font-semibold text-slate-500">
+                  粗略交通費參考（兩人分攤觀念）
+                </p>
+                <ul class="list-disc list-inside space-y-1">
+                  <li>JR / 地鐵 / 市電：約 ¥8,000 / 人（9 天總額、含小樽）。</li>
+                  <li>札幌市內 & 小樽市內計程車：約 ¥7,000–9,000 / 車。</li>
+                  <li>千歲 ⇄ 支笏湖冰濤祭計程車：約 ¥14,000–18,000 / 車（來回）。</li>
+                </ul>
+                <p class="mt-1 text-[11px] text-slate-400">
+                  實際花費以你在「預算頁」填的每日金額為準，這裡只是抓鬆鬆的上限參考。
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Day 6 分開行程: Cassandra / Ivy -->
-          <div
-            v-if="currentDayId === 'd6'"
-            class="bg-slate-50 rounded-2xl p-3 space-y-2 text-xs"
-          >
-            <div class="flex justify-between items-center">
-              <p class="font-semibold text-slate-700">
-                Day 6 自由行程分流
+          <!-- 日程切換 -->
+          <section class="mt-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-slate-800">
+                每日行程 & 小記
+              </h2>
+              <p class="text-[11px] text-slate-400">
+                點選日期查看景點與地圖
               </p>
-              <div class="flex gap-2">
-                <button
-                  class="px-2 py-1 rounded-full border text-[11px]"
-                  :class="splitPerson === 'cassandra'
-                    ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
-                    : 'bg-white border-slate-200 text-slate-700'"
-                  @click="splitPerson = 'cassandra'"
-                >
-                  Cassandra
-                </button>
-                <button
-                  class="px-2 py-1 rounded-full border text-[11px]"
-                  :class="splitPerson === 'ivy'
-                    ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
-                    : 'bg-white border-slate-200 text-slate-700'"
-                  @click="splitPerson = 'ivy'"
-                >
-                  Ivy
-                </button>
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto pb-1">
+              <button
+                v-for="day in days"
+                :key="day.id"
+                @click="selectDay(day.id)"
+                class="flex-shrink-0 px-3 py-2 rounded-2xl border text-xs text-left transition"
+                :class="currentDayId === day.id
+                  ? 'bg-hokkaidoBlue text-white border-hokkaidoBlue'
+                  : 'bg-slate-50 border-slate-200 text-slate-700'"
+              >
+                <div class="font-semibold">
+                  Day {{ day.display }}
+                </div>
+                <div class="text-[11px]">
+                  {{ day.shortTitle }}
+                </div>
+              </button>
+            </div>
+
+            <!-- 當日摘要 -->
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-2 text-xs">
+              <p class="font-semibold text-slate-700">
+                {{ currentDay.title }}
+              </p>
+              <p class="text-slate-500">
+                {{ currentDay.summary }}
+              </p>
+              <p class="text-[11px] text-slate-400" v-if="currentDay.area">
+                主要區域：{{ currentDay.area }}
+              </p>
+            </div>
+
+            <!-- Cassandra / Ivy 小記 -->
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-2 text-[11px]">
+              <p class="font-semibold text-slate-700">
+                今日小記（會保存在這台裝置）
+              </p>
+              <div class="space-y-2">
+                <div>
+                  <p class="text-[11px] text-slate-500 mb-1">Cassandra</p>
+                  <textarea
+                    v-model="dailyNotes[currentDayId].cassandra"
+                    @input="saveState"
+                    rows="2"
+                    class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                    placeholder="今天好冷、好好吃、或是想記錄的任何事..."
+                  ></textarea>
+                </div>
+                <div>
+                  <p class="text-[11px] text-slate-500 mb-1">Ivy</p>
+                  <textarea
+                    v-model="dailyNotes[currentDayId].ivy"
+                    @input="saveState"
+                    rows="2"
+                    class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                    placeholder="Ivy 想寫什麼就寫什麼～"
+                  ></textarea>
+                </div>
               </div>
             </div>
-            <div v-if="splitPerson === 'cassandra'" class="space-y-1">
-              <p class="font-semibold text-slate-700">Cassandra 的想法（暫定）</p>
-              <ul class="list-disc list-inside text-[11px] text-slate-500 space-y-1">
-                <li>札幌站周邊慢逛書店、文具店、Loft／紀伊國屋。</li>
-                <li>下午去 JR Tower T38 拍城市照，晚上泡飯店大浴場。</li>
-                <li>這一日盡量把腳力留到後面的支笏湖與機場日。</li>
-              </ul>
-            </div>
-            <div v-if="splitPerson === 'ivy'" class="space-y-1">
-              <p class="font-semibold text-slate-700">Ivy 的想法（暫定）</p>
-              <ul class="list-disc list-inside text-[11px] text-slate-500 space-y-1">
-                <li>可以自己安排咖啡廳巡禮、美食名單或再去一次想重逛的區域。</li>
-                <li>若想拍照，可再回大通公園或狸小路商圈補畫面。</li>
-                <li>晚上約在札幌站附近集合，一起吃晚餐。</li>
-              </ul>
-            </div>
-          </div>
 
-          <!-- 景點列表 -->
-          <div class="space-y-2 text-xs">
-            <div
-              v-for="spot in currentDay.spots"
-              :key="spot.name"
-              class="flex items-start gap-3 bg-slate-50 rounded-2xl p-3"
-              :class="spot.name === currentSpot.name ? 'ring-2 ring-hokkaidoBlue/60' : ''"
-            >
-              <button
-                class="mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
-                :class="spot.category === '景點'
-                  ? 'bg-hokkaidoLight text-hokkaidoBlue'
-                  : spot.category === '美食'
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-emerald-100 text-emerald-700'"
-                @click="setCurrentSpot(spot)"
+            <!-- 景點列表 -->
+            <div class="space-y-2 text-xs">
+              <div
+                v-for="spot in currentDay.spots"
+                :key="spot.name"
+                class="flex items-start gap-3 bg-slate-50 rounded-2xl p-3"
+                :class="spot.name === currentSpot.name ? 'ring-2 ring-hokkaidoBlue/60' : ''"
               >
-                {{ spot.icon }}
-              </button>
-              <div class="flex-1">
-                <div class="flex justify-between gap-2">
-                  <p class="font-semibold text-slate-800">
-                    {{ spot.name }}
+                <button
+                  class="mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                  :class="spot.category === '景點'
+                    ? 'bg-hokkaidoLight text-hokkaidoBlue'
+                    : spot.category === '美食'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-emerald-100 text-emerald-700'"
+                  @click="setCurrentSpot(spot)"
+                >
+                  {{ spot.icon }}
+                </button>
+                <div class="flex-1">
+                  <div class="flex justify-between gap-2">
+                    <p class="font-semibold text-slate-800">
+                      {{ spot.name }}
+                    </p>
+                    <span class="text-[11px] text-slate-400">
+                      {{ spot.category }}
+                    </span>
+                  </div>
+                  <p class="text-slate-500 mt-0.5">
+                    {{ spot.note }}
                   </p>
-                  <span class="text-[11px] text-slate-400">
-                    {{ spot.category }}
+                  <div class="flex gap-2 mt-2">
+                    <button
+                      @click="setCurrentSpot(spot)"
+                      class="px-2 py-1 rounded-full bg-white border border-slate-200 text-[11px]"
+                    >
+                      查看地圖
+                    </button>
+                    <button
+                      @click="openMaps(spot.mapsQuery)"
+                      class="px-2 py-1 rounded-full bg-hokkaidoBlue text-white text-[11px]"
+                    >
+                      在 Google Maps 開啟導航
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Google Maps 區 -->
+            <div class="bg-slate-900 rounded-2xl p-3 text-xs text-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-[11px] text-slate-400">
+                    目前選擇景點
+                  </p>
+                  <p class="text-sm font-semibold">
+                    {{ currentSpot.name }}
+                  </p>
+                </div>
+                <span class="text-[11px] px-2 py-1 rounded-full bg-slate-800">
+                  {{ currentSpot.category }}
+                </span>
+              </div>
+              <iframe
+                class="map-frame mt-1"
+                :src="mapEmbedUrl"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </section>
+        </template>
+
+        <!-- ② 預算 / 匯率頁 -->
+        <template v-else-if="activeMainView === 'budget'">
+          <!-- 匯率 & 換算 -->
+          <div class="space-y-3 text-xs">
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+              <p class="font-semibold text-slate-700 text-sm">
+                匯率 & 日圓換算
+              </p>
+              <p class="text-[11px] text-slate-500">
+                建議從「台灣銀行匯率表」找日圓的「即期現金賣出價」，如果看到的是「100 日圓 = 23.0 元」，這裡請輸入 <span class="font-mono">0.23</span>。
+              </p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[11px] text-slate-500 w-16">1 日圓 ≈</span>
+                <input
+                  v-model="rateTwdPerJpy"
+                  @input="saveState"
+                  type="number"
+                  step="0.0001"
+                  inputmode="decimal"
+                  class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                  placeholder="例如 0.23"
+                />
+                <span class="text-[11px] text-slate-500">台幣</span>
+              </div>
+
+              <div class="flex items-center gap-2 mt-2">
+                <input
+                  v-model="yenInput"
+                  @input="saveState"
+                  type="number"
+                  inputmode="numeric"
+                  class="w-28 rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                  placeholder="輸入日圓"
+                />
+                <span class="text-[11px]">日圓 ≈</span>
+                <div class="flex-1 text-right font-semibold text-slate-700">
+                  <span v-if="convertedTwd !== ''">{{ convertedTwd }} 元</span>
+                  <span v-else>—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cassandra & Ivy 預算卡 -->
+            <div class="grid grid-cols-1 gap-3">
+              <!-- Cassandra -->
+              <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold text-slate-800">
+                    Cassandra 的預算
+                  </p>
+                  <span class="text-[11px] text-pink-600 bg-pink-50 px-2 py-1 rounded-full">
+                    建議上限：約 26,000 TWD
                   </span>
                 </div>
-                <p class="text-slate-500 mt-0.5">
-                  {{ spot.note }}
-                </p>
-                <div class="flex gap-2 mt-2">
-                  <button
-                    @click="setCurrentSpot(spot)"
-                    class="px-2 py-1 rounded-full bg-white border border-slate-200 text-[11px]"
-                  >
-                    查看地圖
-                  </button>
-                  <button
-                    @click="openMaps(spot.mapsQuery)"
-                    class="px-2 py-1 rounded-full bg-hokkaidoBlue text-white text-[11px]"
-                  >
-                    在 Google Maps 開啟導航
-                  </button>
+                <div class="space-y-2">
+                  <div>
+                    <p class="text-[11px] text-slate-500 mb-1">
+                      預算（台幣）－你自己打就好
+                    </p>
+                    <input
+                      v-model="persons.cassandra.budgetTwd"
+                      @input="saveState"
+                      type="number"
+                      inputmode="numeric"
+                      class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                      placeholder="例如 26000"
+                    />
+                  </div>
+                  <div>
+                    <p class="text-[11px] text-slate-500 mb-1">
+                      若想直接用「日圓整包預算」，可在這裡填（選填）
+                    </p>
+                    <input
+                      v-model="persons.cassandra.budgetJpyOverride"
+                      @input="saveState"
+                      type="number"
+                      inputmode="numeric"
+                      class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                      placeholder="例如 130000"
+                    />
+                  </div>
+
+                  <div class="text-[11px] text-slate-600 space-y-1">
+                    <p>
+                      目前預算（日圓估算）：
+                      <span class="font-mono font-semibold" v-if="budgetJpy('cassandra') !== null">
+                        約 {{ budgetJpy('cassandra') }} ¥
+                      </span>
+                      <span v-else>—</span>
+                    </p>
+                    <p>
+                      已輸入花費總額：
+                      <span class="font-mono font-semibold">
+                        {{ totalSpent('cassandra') }} ¥
+                      </span>
+                    </p>
+                    <p>
+                      預估剩餘可用：
+                      <span class="font-mono font-semibold" v-if="budgetJpy('cassandra') !== null">
+                        {{ remainingJpy('cassandra') }} ¥
+                      </span>
+                      <span v-else>—</span>
+                    </p>
+                    <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden mt-1">
+                      <div
+                        class="h-2 bg-hokkaidoBlue transition-all"
+                        :style="{ width: cassandraProgressBar + '%' }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 每日花費輸入（Cassandra） -->
+                <div class="mt-2 border-t border-slate-200 pt-2 space-y-1">
+                  <p class="text-[11px] text-slate-500 mb-1">
+                    每日實際花費（日圓）－Cassandra 專用
+                  </p>
+                  <div class="max-h-40 overflow-y-auto pr-1 space-y-1">
+                    <div
+                      v-for="day in days"
+                      :key="'cassy-' + day.id"
+                      class="flex items-center gap-2"
+                    >
+                      <span class="w-20 text-[11px] text-slate-500">
+                        Day {{ day.display }}
+                      </span>
+                      <input
+                        v-model="persons.cassandra.dailySpending[day.id]"
+                        @input="saveState"
+                        type="number"
+                        inputmode="numeric"
+                        class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                        placeholder="輸入當天花費 ¥"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ivy -->
+              <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold text-slate-800">
+                    Ivy 的預算
+                  </p>
+                  <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">
+                    建議上限：約 20,000 TWD
+                  </span>
+                </div>
+                <div class="space-y-2">
+                  <div>
+                    <p class="text-[11px] text-slate-500 mb-1">
+                      預算（台幣）－Ivy 自己填
+                    </p>
+                    <input
+                      v-model="persons.ivy.budgetTwd"
+                      @input="saveState"
+                      type="number"
+                      inputmode="numeric"
+                      class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                      placeholder="例如 20000"
+                    />
+                  </div>
+                  <div>
+                    <p class="text-[11px] text-slate-500 mb-1">
+                      若想直接用「日圓整包預算」，可在這裡填（選填）
+                    </p>
+                    <input
+                      v-model="persons.ivy.budgetJpyOverride"
+                      @input="saveState"
+                      type="number"
+                      inputmode="numeric"
+                      class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                      placeholder="例如 100000"
+                    />
+                  </div>
+
+                  <div class="text-[11px] text-slate-600 space-y-1">
+                    <p>
+                      目前預算（日圓估算）：
+                      <span class="font-mono font-semibold" v-if="budgetJpy('ivy') !== null">
+                        約 {{ budgetJpy('ivy') }} ¥
+                      </span>
+                      <span v-else>—</span>
+                    </p>
+                    <p>
+                      已輸入花費總額：
+                      <span class="font-mono font-semibold">
+                        {{ totalSpent('ivy') }} ¥
+                      </span>
+                    </p>
+                    <p>
+                      預估剩餘可用：
+                      <span class="font-mono font-semibold" v-if="budgetJpy('ivy') !== null">
+                        {{ remainingJpy('ivy') }} ¥
+                      </span>
+                      <span v-else>—</span>
+                    </p>
+                    <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden mt-1">
+                      <div
+                        class="h-2 bg-emerald-500 transition-all"
+                        :style="{ width: ivyProgressBar + '%' }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 每日花費輸入（Ivy） -->
+                <div class="mt-2 border-t border-slate-200 pt-2 space-y-1">
+                  <p class="text-[11px] text-slate-500 mb-1">
+                    每日實際花費（日圓）－Ivy 專用
+                  </p>
+                  <div class="max-h-40 overflow-y-auto pr-1 space-y-1">
+                    <div
+                      v-for="day in days"
+                      :key="'ivy-' + day.id"
+                      class="flex items-center gap-2"
+                    >
+                      <span class="w-20 text-[11px] text-slate-500">
+                        Day {{ day.display }}
+                      </span>
+                      <input
+                        v-model="persons.ivy.dailySpending[day.id]"
+                        @input="saveState"
+                        type="number"
+                        inputmode="numeric"
+                        class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                        placeholder="輸入當天花費 ¥"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 每日 Check List -->
-          <div class="bg-slate-50 rounded-2xl p-3 text-xs space-y-2">
-            <div class="flex justify-between items-center">
-              <p class="font-semibold text-slate-700">今日 Check List</p>
-              <p class="text-[11px] text-slate-400">
-                （打勾只是幫記憶，用完這趟就好）
+            <!-- 小提醒 -->
+            <div class="bg-slate-50 rounded-2xl p-3 text-[11px] text-slate-500 space-y-1">
+              <p class="font-semibold text-slate-700">
+                使用提示
               </p>
-            </div>
-            <div
-              v-for="(item, idx) in currentDay.checklist"
-              :key="idx"
-              class="flex items-start gap-2"
-            >
-              <input
-                type="checkbox"
-                v-model="item.done"
-                class="mt-0.5 w-3 h-3 rounded border-slate-300"
-              />
-              <span
-                class="text-[11px]"
-                :class="item.done ? 'line-through text-slate-400' : 'text-slate-600'"
-              >
-                {{ item.text }}
-              </span>
+              <ul class="list-disc list-inside space-y-1">
+                <li>匯率、預算、每日金額、備註都會存在這台裝置的瀏覽器裡（localStorage）。</li>
+                <li>換手機或換瀏覽器，資料就會是新的（不會跨裝置同步）。</li>
+                <li>不一定要填滿，當成「記帳＋大方向提醒」就好，不需要逼自己太精準。</li>
+              </ul>
             </div>
           </div>
+        </template>
 
-          <!-- Google Maps 區 -->
-          <div class="bg-slate-900 rounded-2xl p-3 text-xs text-slate-100 space-y-2">
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-[11px] text-slate-400">
-                  目前選擇景點
-                </p>
-                <p class="text-sm font-semibold">
-                  {{ currentSpot.name }}
-                </p>
+        <!-- ③ 行李打包頁 -->
+        <template v-else>
+          <div class="space-y-3 text-xs">
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+              <p class="font-semibold text-slate-700 text-sm">
+                行李打包清單（共用）
+              </p>
+              <p class="text-[11px] text-slate-500">
+                可以邊準備邊勾，勾選狀態會保留。之後還可以自己新增項目。
+              </p>
+              <div class="space-y-1 max-h-44 overflow-y-auto pr-1 mt-1">
+                <div
+                  v-for="(item, idx) in packing.items"
+                  :key="'pack-' + idx"
+                  class="flex items-center gap-2"
+                >
+                  <input
+                    type="checkbox"
+                    v-model="item.done"
+                    @change="saveState"
+                    class="w-4 h-4 rounded border-slate-300 text-hokkaidoBlue focus:ring-hokkaidoBlue"
+                  />
+                  <span
+                    class="text-[11px]"
+                    :class="item.done ? 'line-through text-slate-400' : 'text-slate-700'"
+                  >
+                    {{ item.text }}
+                  </span>
+                </div>
               </div>
-              <span class="text-[11px] px-2 py-1 rounded-full bg-slate-800">
-                {{ currentSpot.category }}
-              </span>
-            </div>
-            <iframe
-              class="map-frame mt-1"
-              :src="mapEmbedUrl"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-        </section>
 
-        <!-- Must Do / Must Eat / Must Buy -->
-        <section class="mt-4 space-y-2 text-xs">
-          <h2 class="text-sm font-semibold text-slate-800">
-            Hokkaido Must-Do / Must-Eat / Must-Buy
-          </h2>
-          <div class="bg-slate-50 rounded-2xl p-3 grid grid-cols-1 gap-3">
-            <div>
-              <p class="font-semibold text-slate-700 mb-1 text-[13px]">必做 Must-Do</p>
-              <ul class="list-disc list-inside text-[11px] text-slate-600 space-y-1">
-                <li>在藻岩山看一次札幌夜景，記得多帶一顆行動電源。</li>
-                <li>支笏湖冰濤祭一定要拍「白天 + 點燈」兩種氛圍。</li>
-                <li>在飯店大浴場泡到完全暖起來再回房間睡覺。</li>
-              </ul>
+              <!-- 新增項目 -->
+              <div class="flex items-center gap-2 mt-2">
+                <input
+                  v-model="newPackingItem"
+                  @keyup.enter="addPackingItem"
+                  type="text"
+                  class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                  placeholder="新增自己的打包項目（按 Enter 儲存）"
+                />
+                <button
+                  @click="addPackingItem"
+                  class="px-2 py-1 rounded-xl bg-hokkaidoBlue text-white text-[11px]"
+                >
+                  加入
+                </button>
+              </div>
             </div>
-            <div>
-              <p class="font-semibold text-slate-700 mb-1 text-[13px]">必吃 Must-Eat</p>
-              <ul class="list-disc list-inside text-[11px] text-slate-600 space-y-1">
-                <li>二條市場的海鮮丼（生魚片 + 螃蟹一定要來一碗）。</li>
-                <li>小樽的壽司（例如政壽司），選一餐好好犒賞自己。</li>
-                <li>新千歲機場拉麵道場挑一間喜歡的北海道拉麵。</li>
-              </ul>
+
+            <!-- Cassandra / Ivy 行李備註 -->
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+              <p class="font-semibold text-slate-700 text-sm">
+                Cassandra 專屬備註
+              </p>
+              <textarea
+                v-model="packing.cassandraNotes"
+                @input="saveState"
+                rows="3"
+                class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                placeholder="例如：藥品、保養品、北海道特別想帶的衣物..."
+              ></textarea>
             </div>
-            <div>
-              <p class="font-semibold text-slate-700 mb-1 text-[13px]">必買 Must-Buy</p>
-              <ul class="list-disc list-inside text-[11px] text-slate-600 space-y-1">
-                <li>新千歲機場：白色戀人、Royce 巧克力、薯條三兄弟。</li>
-                <li>北海道限定零食（記得留下自己愛吃的，別全部送人）。</li>
-                <li>如果有遇到喜歡的毛毛耳罩、手套或圍巾，可以當場用、回台灣也能繼續穿。</li>
-              </ul>
+
+            <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+              <p class="font-semibold text-slate-700 text-sm">
+                Ivy 專屬備註
+              </p>
+              <textarea
+                v-model="packing.ivyNotes"
+                @input="saveState"
+                rows="3"
+                class="w-full rounded-xl border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-hokkaidoBlue"
+                placeholder="例如：個人藥品、電子用品、換洗衣物..."
+              ></textarea>
             </div>
           </div>
-        </section>
+        </template>
       </section>
 
-      <!-- 底部固定導航條（裝飾用） -->
+      <!-- 底部固定導航條（真的可以切換頁面） -->
       <nav
         class="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-6 py-2 rounded-t-3xl bg-black/60 backdrop-blur flex justify-between text-[11px] text-slate-200"
       >
-        <button class="flex flex-col items-center gap-0.5">
-          <span>行程</span>
+        <button
+          class="flex flex-col items-center gap-0.5"
+          @click="activeMainView = 'plan'"
+        >
+          <span :class="activeMainView === 'plan' ? 'font-semibold' : 'opacity-70'">
+            行程
+          </span>
         </button>
-        <button class="flex flex-col items-center gap-0.5 opacity-70">
-          <span>預算</span>
+        <button
+          class="flex flex-col items-center gap-0.5"
+          @click="activeMainView = 'budget'"
+        >
+          <span :class="activeMainView === 'budget' ? 'font-semibold' : 'opacity-70'">
+            預算
+          </span>
         </button>
-        <button class="flex flex-col items-center gap-0.5 opacity-70">
-          <span>小提醒</span>
+        <button
+          class="flex flex-col items-center gap-0.5"
+          @click="activeMainView = 'packing'"
+        >
+          <span :class="activeMainView === 'packing' ? 'font-semibold' : 'opacity-70'">
+            行李
+          </span>
         </button>
       </nav>
     </main>
@@ -539,31 +762,13 @@
   createApp({
     data() {
       return {
+        activeMainView: "plan", // plan / budget / packing
         tabs: [
           { id: "flight", label: "航班" },
           { id: "stay",   label: "住宿" },
           { id: "transport", label: "交通" },
         ],
         activeTab: "flight",
-
-        // 預算 & 匯率
-        budgetTwd: 26000,    // Cassandra 上限
-        jpyPerTwd: 4.5,      // 可自行調整
-        extraManualSpend: 0, // 其他手動輸入的額外日幣支出
-
-        // 每日估計支出 (交通+餐飲+門票的大略值；使用者可自行改)
-        dailySpendEstimate: {
-          d1: 6000,
-          d2: 8000,
-          d3: 9000,
-          d4: 7000,
-          d5: 11000,
-          d6: 6000,
-          d7: 9000,
-          d8: 9000,
-          d9: 3000,
-        },
-
         currentDayId: "d1",
         currentSpot: {
           name: "新千歲機場",
@@ -572,9 +777,50 @@
           note: "北海道的入口，也是最後採買伴手禮的好地方。",
           icon: "✈️",
         },
+        // 匯率 & 預算
+        rateTwdPerJpy: "",
+        yenInput: "",
+        persons: {
+          cassandra: {
+            name: "Cassandra",
+            suggestedTwd: 26000,
+            budgetTwd: "",
+            budgetJpyOverride: "",
+            dailySpending: {},
+          },
+          ivy: {
+            name: "Ivy",
+            suggestedTwd: 20000,
+            budgetTwd: "",
+            budgetJpyOverride: "",
+            dailySpending: {},
+          },
+        },
+        // 每日小記
+        dailyNotes: {},
 
-        splitPerson: "cassandra",
+        // 行李
+        packing: {
+          items: [
+            { text: "護照 & 身分證", done: false },
+            { text: "機票 / 電子機票截圖", done: false },
+            { text: "日圓現金 & 信用卡", done: false },
+            { text: "日本上網 / eSIM / Wi-Fi 機", done: false },
+            { text: "常備藥品（感冒藥、腸胃藥、過敏藥）", done: false },
+            { text: "發熱衣 × 2、發熱褲 × 2", done: false },
+            { text: "厚外套 / 羽絨衣", done: false },
+            { text: "帽子、圍巾、手套", done: false },
+            { text: "厚襪子 & 防滑鞋 / 雪靴", done: false },
+            { text: "行動電源 & 充電線", done: false },
+            { text: "相機 / 手機備用儲存空間", done: false },
+            { text: "保養品 & 卸妝用品", done: false },
+          ],
+          cassandraNotes: "",
+          ivyNotes: "",
+        },
+        newPackingItem: "",
 
+        // 行程天數
         days: [
           {
             id: "d1",
@@ -583,7 +829,6 @@
             title: "Day 1｜1 / 26（一）抵達 & 札幌車站周邊",
             summary: "新千歲機場抵達 → JR 札幌 → 飯店 Check-in → 寶可夢中心 & 札幌車站逛街。",
             area: "新千歲・札幌車站",
-            transportEstimate: 3000,
             spots: [
               {
                 name: "新千歲機場",
@@ -607,12 +852,6 @@
                 icon: "🧸",
               },
             ],
-            checklist: [
-              { text: "下飛機後先補充水分、戴好帽子手套。", done: false },
-              { text: "JR 札幌車票、Suica / IC 卡準備好。", done: false },
-              { text: "Check-in 後先休息至少 30 分鐘再出門。", done: false },
-              { text: "寶可夢中心先買想要的限定品。", done: false },
-            ],
           },
           {
             id: "d2",
@@ -621,7 +860,6 @@
             title: "Day 2｜1 / 27（二）北海道大學 & 北海道神宮",
             summary: "上午北海道大學雪景，下午北海道神宮 & 六花亭判官餅，晚餐成吉思汗烤肉。",
             area: "札幌北區・圓山",
-            transportEstimate: 3000,
             spots: [
               {
                 name: "北海道大學（札幌校區）",
@@ -645,12 +883,6 @@
                 icon: "🍡",
               },
             ],
-            checklist: [
-              { text: "出門前確認冰爪 / 防滑鞋是否穿好。", done: false },
-              { text: "手機電量 > 70%，帶行動電源。", done: false },
-              { text: "在北海道大學不要走太深，只拍重點即可。", done: false },
-              { text: "北海道神宮抽一支籤、買御守。", done: false },
-            ],
           },
           {
             id: "d3",
@@ -659,7 +891,6 @@
             title: "Day 3｜1 / 28（三）海鮮丼 & 藻岩山夜景",
             summary: "早上海鮮丼 + 諏訪神社，下午回飯店午睡，晚上藻岩山夜景。",
             area: "札幌中心・南區",
-            transportEstimate: 4000,
             spots: [
               {
                 name: "二條市場",
@@ -683,12 +914,6 @@
                 icon: "🌃",
               },
             ],
-            checklist: [
-              { text: "早上先吃一點東西，不要空腹吃海鮮丼。", done: false },
-              { text: "中午前後一定要回飯店睡午覺。", done: false },
-              { text: "上藻岩山前再檢查保暖：帽子、圍巾、手套、暖暖包。", done: false },
-              { text: "夜景一定要拍幾張『兩人合照』，不是只有風景。", done: false },
-            ],
           },
           {
             id: "d4",
@@ -697,7 +922,6 @@
             title: "Day 4｜1 / 29（四）地下街逛街日",
             summary: "走地下步行空間到大通公園、電視塔，再到狸小路商店街與咖啡廳。",
             area: "札幌市中心",
-            transportEstimate: 2500,
             spots: [
               {
                 name: "大通公園 & 電視塔周邊",
@@ -721,11 +945,6 @@
                 icon: "☕",
               },
             ],
-            checklist: [
-              { text: "以地下街為主，盡量少在地面吹風。", done: false },
-              { text: "買想買的小紀念品、藥妝可以集中在這一天。", done: false },
-              { text: "下午安排至少 1～2 小時坐在咖啡廳休息。", done: false },
-            ],
           },
           {
             id: "d5",
@@ -734,7 +953,6 @@
             title: "Day 5｜1 / 30（五）小樽運河 & 音樂盒堂",
             summary: "JR 前往小樽，散步堺町通、小樽音樂盒堂與運河夜景。",
             area: "小樽",
-            transportEstimate: 6000,
             spots: [
               {
                 name: "南小樽站",
@@ -765,12 +983,6 @@
                 icon: "🍣",
               },
             ],
-            checklist: [
-              { text: "早上提早出門搭 JR，避免尖峰人潮。", done: false },
-              { text: "南小樽站下車後一路是下坡，記得穿好防滑鞋。", done: false },
-              { text: "堺町通邊走邊吃，看到喜歡的店就進去休息。", done: false },
-              { text: "回程前先上洗手間，搭車回札幌比較安心。", done: false },
-            ],
           },
           {
             id: "d6",
@@ -779,7 +991,6 @@
             title: "Day 6｜1 / 31（六）自由安排・體力回復日",
             summary: "視體力選擇札幌車站周邊逛街、JR Tower 展望台，或在飯店大浴場放鬆。",
             area: "札幌車站周邊",
-            transportEstimate: 2500,
             spots: [
               {
                 name: "JR Tower 展望台 T38",
@@ -796,20 +1007,14 @@
                 icon: "🛒",
               },
             ],
-            checklist: [
-              { text: "早上可以睡晚一點，不必趕行程。", done: false },
-              { text: "依照 Cassandra / Ivy 兩個人各自步調安排。", done: false },
-              { text: "晚上一定要再泡一次大浴場，好好放鬆。", done: false },
-            ],
           },
           {
             id: "d7",
             display: 7,
             shortTitle: "支笏湖冰濤祭",
             title: "Day 7｜2 / 1（日）移動到千歲 & 支笏湖冰濤祭",
-            summary: "上午退房移動到千歲，下午～晚上參觀支笏湖冰濤祭。",
+            summary: "上午退房移動到千歲，下午～晚上參觀支笏湖冰濤祭（預設計程車往返）。",
             area: "千歲・支笏湖",
-            transportEstimate: 8000,
             spots: [
               {
                 name: "千歲站／千歲市區",
@@ -829,14 +1034,9 @@
                 name: "支笏湖冰濤祭會場",
                 category: "景點",
                 mapsQuery: "支笏湖 氷濤まつり",
-                note: "冰雕與夜間點燈，超級冷，一定要多穿。",
+                note: "冰雕與夜間點燈，非常寒冷，預計以計程車往返。",
                 icon: "❄️",
               },
-            ],
-            checklist: [
-              { text: "早上退房時確認行李全部打包好。", done: false },
-              { text: "去冰濤祭前身上貼好暖暖包。", done: false },
-              { text: "手機電量 + 行動電源都要充飽。", done: false },
             ],
           },
           {
@@ -846,7 +1046,6 @@
             title: "Day 8｜2 / 2（一）新千歲機場樂園日",
             summary: "一整天待在新千歲機場：Hello Kitty、Royce 巧克力世界、機場溫泉、拉麵道場。",
             area: "新千歲機場",
-            transportEstimate: 4000,
             spots: [
               {
                 name: "Hello Kitty Happy Flight",
@@ -877,11 +1076,6 @@
                 icon: "🍜",
               },
             ],
-            checklist: [
-              { text: "帶個小托特包裝伴手禮，比較好拎。", done: false },
-              { text: "先把必買清單完成，再逛其他店。", done: false },
-              { text: "下午安排機場溫泉當作腿部復健。", done: false },
-            ],
           },
           {
             id: "d9",
@@ -890,7 +1084,6 @@
             title: "Day 9｜2 / 3（二）回程日",
             summary: "Check-out 後前往新千歲機場，最後採買伴手禮，搭機回台灣。",
             area: "千歲・新千歲機場",
-            transportEstimate: 3000,
             spots: [
               {
                 name: "新千歲機場 伴手禮區",
@@ -907,11 +1100,6 @@
                 icon: "✈️",
               },
             ],
-            checklist: [
-              { text: "再次確認護照、機票、錢包都在身上。", done: false },
-              { text: "把零錢和剩下的日幣換成零食或紀念小物。", done: false },
-              { text: "上機前上一次洗手間、補水。", done: false },
-            ],
           },
         ],
       };
@@ -924,31 +1112,23 @@
         const q = encodeURIComponent(this.currentSpot.mapsQuery || this.currentSpot.name);
         return `https://www.google.com/maps?q=${q}&output=embed`;
       },
-      budgetJpy() {
-        return Math.round(this.budgetTwd * this.jpyPerTwd);
+      convertedTwd() {
+        const rate = parseFloat(this.rateTwdPerJpy);
+        const yen = parseFloat(this.yenInput);
+        if (!rate || !yen) return "";
+        return Math.round(yen * rate).toString();
       },
-      totalSpendJpy() {
-        let sum = 0;
-        for (const id in this.dailySpendEstimate) {
-          sum += Number(this.dailySpendEstimate[id] || 0);
-        }
-        sum += Number(this.extraManualSpend || 0);
-        return Math.round(sum);
+      cassandraProgressBar() {
+        const b = this.budgetJpy("cassandra");
+        if (!b || b <= 0) return 0;
+        const used = this.totalSpent("cassandra");
+        return Math.min(100, Math.round((used / b) * 100));
       },
-      totalSpendTwd() {
-        return this.jpyPerTwd ? Math.round(this.totalSpendJpy / this.jpyPerTwd) : 0;
-      },
-      remainingJpy() {
-        return Math.max(this.budgetJpy - this.totalSpendJpy, 0);
-      },
-      budgetUsedPercent() {
-        if (!this.budgetJpy) return 0;
-        return Math.min((this.totalSpendJpy / this.budgetJpy) * 100, 120);
-      },
-      budgetBarColor() {
-        if (this.budgetUsedPercent < 70) return "bg-emerald-400";
-        if (this.budgetUsedPercent < 100) return "bg-amber-400";
-        return "bg-red-500";
+      ivyProgressBar() {
+        const b = this.budgetJpy("ivy");
+        if (!b || b <= 0) return 0;
+        const used = this.totalSpent("ivy");
+        return Math.min(100, Math.round((used / b) * 100));
       },
     },
     methods: {
@@ -958,6 +1138,8 @@
         if (day && day.spots.length > 0) {
           this.currentSpot = day.spots[0];
         }
+        this.ensureDailyNote(id);
+        this.saveState();
       },
       setCurrentSpot(spot) {
         this.currentSpot = spot;
@@ -967,9 +1149,113 @@
         const url = `https://www.google.com/maps/search/?api=1&query=${q}`;
         window.open(url, "_blank");
       },
+      budgetJpy(personKey) {
+        const person = this.persons[personKey];
+        if (!person) return null;
+        const override = parseFloat(person.budgetJpyOverride);
+        if (!isNaN(override) && override > 0) return Math.round(override);
+        const rate = parseFloat(this.rateTwdPerJpy);
+        const twd = parseFloat(person.budgetTwd);
+        if (!isNaN(rate) && rate > 0 && !isNaN(twd) && twd > 0) {
+          return Math.round(twd / rate);
+        }
+        return null;
+      },
+      totalSpent(personKey) {
+        const person = this.persons[personKey];
+        if (!person || !person.dailySpending) return 0;
+        let sum = 0;
+        for (const dayId of Object.keys(person.dailySpending)) {
+          const v = parseFloat(person.dailySpending[dayId]);
+          if (!isNaN(v)) sum += v;
+        }
+        return Math.round(sum);
+      },
+      remainingJpy(personKey) {
+        const b = this.budgetJpy(personKey);
+        if (b === null) return null;
+        const used = this.totalSpent(personKey);
+        return Math.max(0, b - used);
+      },
+      addPackingItem() {
+        const text = (this.newPackingItem || "").trim();
+        if (!text) return;
+        this.packing.items.push({ text, done: false });
+        this.newPackingItem = "";
+        this.saveState();
+      },
+      ensureDailyNote(dayId) {
+        if (!this.dailyNotes[dayId]) {
+          this.dailyNotes[dayId] = { cassandra: "", ivy: "" };
+        }
+      },
+      // 儲存到 localStorage
+      saveState() {
+        const state = {
+          rateTwdPerJpy: this.rateTwdPerJpy,
+          yenInput: this.yenInput,
+          persons: this.persons,
+          dailyNotes: this.dailyNotes,
+          packing: this.packing,
+          currentDayId: this.currentDayId,
+          activeMainView: this.activeMainView,
+        };
+        try {
+          localStorage.setItem("hokkaidoTripV3", JSON.stringify(state));
+        } catch (e) {
+          console.warn("無法儲存狀態到 localStorage：", e);
+        }
+      },
+      loadState() {
+        try {
+          const raw = localStorage.getItem("hokkaidoTripV3");
+          if (!raw) return;
+          const saved = JSON.parse(raw);
+          if (saved.rateTwdPerJpy !== undefined) this.rateTwdPerJpy = saved.rateTwdPerJpy;
+          if (saved.yenInput !== undefined) this.yenInput = saved.yenInput;
+          if (saved.persons) {
+            this.persons = saved.persons;
+          }
+          if (saved.dailyNotes) {
+            this.dailyNotes = saved.dailyNotes;
+          }
+          if (saved.packing) {
+            this.packing = saved.packing;
+          }
+          if (saved.currentDayId) {
+            this.currentDayId = saved.currentDayId;
+          }
+          if (saved.activeMainView) {
+            this.activeMainView = saved.activeMainView;
+          }
+        } catch (e) {
+          console.warn("讀取 localStorage 失敗，使用預設值：", e);
+        }
+      },
+      initDailyStructures() {
+        // 確保每個人都有每一天的 dailySpending 欄位
+        for (const key of ["cassandra", "ivy"]) {
+          const person = this.persons[key];
+          if (!person.dailySpending) person.dailySpending = {};
+          this.days.forEach(day => {
+            if (!(day.id in person.dailySpending)) {
+              person.dailySpending[day.id] = "";
+            }
+          });
+        }
+        // 確保每日小記存在
+        this.days.forEach(day => {
+          this.ensureDailyNote(day.id);
+        });
+      },
     },
     mounted() {
-      // 初始化 Day1 第一個景點
+      // 先載入 localStorage
+      this.loadState();
+      // 初始化結構
+      this.initDailyStructures();
+
+      // 初始化當前景點
       const day = this.days.find(d => d.id === this.currentDayId);
       if (day && day.spots[0]) {
         this.currentSpot = day.spots[0];
@@ -979,7 +1265,6 @@
 </script>
 </body>
 </html>
-
 
 
 
